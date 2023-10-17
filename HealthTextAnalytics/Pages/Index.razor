@@ -14,7 +14,7 @@
 
     <div class="form-group row">
         <label><strong>Text input</strong></label>
-        <InputTextArea @bind-Value="@Model.InputText" rows="5" />
+        <InputTextArea class="overflow-scroll" style="max-height:500px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.InputText" rows="5" />
     </div>
 
     <div class="form-group row"> 
@@ -46,7 +46,7 @@
             <b>Execution time took: @Model.ExecutionTime ms (milliseconds)</b><br />
         }
         <br />
-        <InputTextArea readonly="readonly" style="font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.AnalysisResult" rows="1000" />
+        <InputTextArea class="overflow-scroll" readonly="readonly" style="max-height:500px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.AnalysisResult" rows="1000" />
     </div>
 
 </EditForm>
