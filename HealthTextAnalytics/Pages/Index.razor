@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using HealthTextAnalytics.Models;
+@using System.Text;
 @inject IHttpClientFactory _httpClientFactory;
 
 <h1>Hello, world!</h1>
@@ -40,10 +41,14 @@ Welcome to your new app.
         string prescription = "The doctor prescribed 200mg Ibuprofen";
         string requestBodyRaw = HealthTextAnalysisRequestFactory.CreateRequest(prescription);
 
-        var requestPayload = new StringContent(requestBodyRaw);
-
         string knownEndpointAnalyzeTextUrl = @"language/analyze-text/jobs?api-version=2022-05-15-preview";
-        var response = await client.PostAsync(knownEndpointAnalyzeTextUrl, requestPayload);
+
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, knownEndpointAnalyzeTextUrl);
+        request.Content = new StringContent(requestBodyRaw,
+                                            Encoding.UTF8,
+                                            "application/json");//CONTENT-TYPE header
+
+        var response = await client.SendAsync(request);
         string responseResult = await response.Content.ReadAsStringAsync();
         Model.AnalysisResult = responseResult;
         
