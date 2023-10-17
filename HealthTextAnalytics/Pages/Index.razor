@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using HealthTextAnalytics.Models;
 @using System.Text;
+@using System.Text.Json;
 @inject IHttpClientFactory _httpClientFactory;
 
 <h1>Hello, world!</h1>
@@ -41,7 +42,9 @@ Welcome to your new app.
         string prescription = "The doctor prescribed 200mg Ibuprofen";
         string requestBodyRaw = HealthTextAnalysisRequestFactory.CreateRequest(prescription);
 
-        string knownEndpointAnalyzeTextUrl = @"language/analyze-text/jobs?api-version=2022-05-15-preview";
+        string knownEndpointAnalyzeTextUrl = @"language/analyze-text/jobs?api-version=2023-04-01"; 
+
+        //https://learn.microsoft.com/en-us/azure/ai-services/language-service/text-analytics-for-health/how-to/call-api?tabs=ner
 
         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, knownEndpointAnalyzeTextUrl);
         request.Content = new StringContent(requestBodyRaw,
@@ -51,7 +54,7 @@ Welcome to your new app.
         var response = await client.SendAsync(request);
         string responseResult = await response.Content.ReadAsStringAsync();
         Model.AnalysisResult = responseResult;
-        
+
         StateHasChanged();
     }
 
@@ -59,25 +62,24 @@ Welcome to your new app.
     {
         public static string CreateRequest(string inputText)
         {
-            var request = new 
+            var request = new
             {
-                analsysisInput = new
+                analysisInput = new
                 {
                     documents = new[]
                     {
-                        new { text = inputText, language = "en", id = "1" }                   
+                        new { text = inputText, id = "1", language = "en" }
+                    }
                 },
-                    tasks = new[]
-                    {
-                        new { taskId = "analyze 1", kind = "parameters", parameters = new { fhirVersion = "4.0.1" } }
-
-                }
-                }
+                tasks = new[]
+                {
+                    new { id = "analyze 1", kind = "Healthcare", parameters = new { fhirVersion = "4.0.1" } }
+                }                
             };
-            return System.Text.Json.JsonSerializer.Serialize(request);
+            return System.Text.Json.JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true });
         }
 
-        
+
     }
 
    
