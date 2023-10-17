@@ -3,6 +3,7 @@
 @using System.Text;
 @using System.Text.Json;
 @using System.Text.Json.Nodes;
+@using System.Diagnostics;
 @inject IHttpClientFactory _httpClientFactory;
 
 <h3>Azure HealthCare Text Analysis - Azure Cognitive Services</h3>
@@ -38,6 +39,13 @@
 
     <div class="form-group row">
         <label><strong>Analysis result</strong></label>
+
+        @if (isSearchPerformed)
+        {
+            <br />
+            <b>Execution time took: @Model.ExecutionTime ms (milliseconds)</b><br />
+        }
+        <br />
         <InputTextArea readonly="readonly" style="font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.AnalysisResult" rows="1000" />
     </div>
 
@@ -51,6 +59,8 @@
     private IndexModel Model = new();
 
     private bool isProcessing = false;
+
+    private bool isSearchPerformed = false;
 
     protected override void OnParametersSet()
     {
@@ -93,6 +103,8 @@ severe structural defects indication of of the of the right petrous cerebral inf
 
             //https://learn.microsoft.com/en-us/azure/ai-services/language-service/text-analytics-for-health/how-to/call-api?tabs=ner
 
+            var stopWatch = Stopwatch.StartNew();
+
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, knownEndpointAnalyzeTextUrl);
             request.Content = new StringContent(requestBodyRaw,
                                                 Encoding.UTF8,
@@ -118,6 +130,7 @@ severe structural defects indication of of the of the right petrous cerebral inf
                     if (resultFromService["status"].GetValue<string>() == "succeeded")
                     {
                         Model.AnalysisResult = await resultFromHealthAnalysis.Content.ReadAsStringAsync();
+                        Model.ExecutionTime = stopWatch.ElapsedMilliseconds;
                         break;
                     }
 
@@ -138,6 +151,7 @@ severe structural defects indication of of the of the right petrous cerebral inf
         finally
         {
             isProcessing = false;
+            isSearchPerformed = true;
             StateHasChanged();
         }
 
