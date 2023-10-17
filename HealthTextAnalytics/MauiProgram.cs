@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using HealthTextAnalytics.Data;
-using System.Net.Http.Headers;
 
 namespace HealthTextAnalytics;
 
@@ -22,9 +20,6 @@ public static class MauiProgram
 		builder.Services.AddBlazorWebViewDeveloperTools();
 		builder.Logging.AddDebug();
 #endif
-
-		builder.Services.AddSingleton<WeatherForecastService>();
-
 
 		var azureEndpoint = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SERVICES_LANGUAGE_SERVICE_ENDPOINT");
         var azureKey = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SERVICES_LANGUAGE_SERVICE_KEY");
