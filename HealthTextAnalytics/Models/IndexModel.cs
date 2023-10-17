@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace HealthTextAnalytics.Models
 {
+   
     public class IndexModel
     {
+     
+        [Required]
+        public string InputText { get; set; }
+
         public string AnalysisResult { get; set; }
+
     }
+
 }

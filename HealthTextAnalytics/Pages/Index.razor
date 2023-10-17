@@ -2,23 +2,63 @@
 @using HealthTextAnalytics.Models;
 @using System.Text;
 @using System.Text.Json;
+@using System.Text.Json.Nodes;
 @inject IHttpClientFactory _httpClientFactory;
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+<h3>Azure HealthCare Text Analysis - Azure Cognitive Services</h3>
 
 <EditForm Model="@Model" OnValidSubmit="@Submit">
-    <button class="btn btn-outline-primary" type="submit">Run HealthCare text analysis</button>
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group row">
+        <label><strong>Text input</strong></label>
+        <InputTextArea @bind-Value="@Model.InputText" rows="5" />
+    </div>
+
+    <div class="form-group row"> 
+        <div class="col">
+            <br />
+            <button class="btn btn-outline-primary" type="submit">Run</button>
+        </div>
+        <div class="col">
+        </div>
+        <div class="col">
+        </div>
+    </div>
+
+    <br />
+
+    @if (isProcessing)
+    {
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
+        </div>
+    }
+
+    <div class="form-group row">
+        <label><strong>Analysis result</strong></label>
+        <InputTextArea readonly="readonly" style="font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.AnalysisResult" rows="1000" />
+    </div>
+
 </EditForm>
 
 
 
 
 @code {
+
     private IndexModel Model = new();
+
+    private bool isProcessing = false;
+
+    protected override void OnParametersSet()
+    {
+        Model.InputText = @"A 12-year old girl with known hyperagglutinability, presented to the emergency department with a 2-week history 
+of headeaches and examination right side indicated with conduction facial weakness Neurologic sensorineural hearing loss Weber's test
+demonstrating on the right head revealed temporal bone lateralizing on the , and the Magnetic resonance imaging
+severe structural defects indication of of the of the right petrous cerebral infarction";
+    }
 
     private TextAnalyticsClient CreateTextAnalyticsClient()
     {
@@ -33,30 +73,77 @@ Welcome to your new app.
             throw new ArgumentNullException(nameof(uri), "Could not get system environment variable named 'AZURE_COGNITIVE_SERVICE_KEY' Set this variable first.");
         }
         var client = new TextAnalyticsClient(new Uri(uri!), new AzureKeyCredential(key!));
+
         return client;        
     }
 
     private async Task Submit()
     {
-        var client = _httpClientFactory.CreateClient("Az");
-        string prescription = "The doctor prescribed 200mg Ibuprofen";
-        string requestBodyRaw = HealthTextAnalysisRequestFactory.CreateRequest(prescription);
+        try
+        {
+            isProcessing = true; 
 
-        string knownEndpointAnalyzeTextUrl = @"language/analyze-text/jobs?api-version=2023-04-01"; 
+            Model.AnalysisResult = string.Empty;
 
-        //https://learn.microsoft.com/en-us/azure/ai-services/language-service/text-analytics-for-health/how-to/call-api?tabs=ner
+            var client = _httpClientFactory.CreateClient("Az");
 
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, knownEndpointAnalyzeTextUrl);
-        request.Content = new StringContent(requestBodyRaw,
-                                            Encoding.UTF8,
-                                            "application/json");//CONTENT-TYPE header
+            string requestBodyRaw = HealthTextAnalysisRequestFactory.CreateRequest(Model.InputText);
 
-        var response = await client.SendAsync(request);
-        string responseResult = await response.Content.ReadAsStringAsync();
-        Model.AnalysisResult = responseResult;
+            string knownEndpointAnalyzeTextUrl = @"language/analyze-text/jobs?api-version=2023-04-01";
 
-        StateHasChanged();
+            //https://learn.microsoft.com/en-us/azure/ai-services/language-service/text-analytics-for-health/how-to/call-api?tabs=ner
+
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, knownEndpointAnalyzeTextUrl);
+            request.Content = new StringContent(requestBodyRaw,
+                                                Encoding.UTF8,
+                                                "application/json");//CONTENT-TYPE header
+
+            var response = await client.SendAsync(request);
+
+            const int awaitTimeInMs = 500;
+
+            var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(awaitTimeInMs));
+
+            const int maxTimerWait = 10000;
+            int timeAwaited = 0;
+
+            while (await timer.WaitForNextTickAsync())
+            {
+                if (response.IsSuccessStatusCode)
+                {
+                    var operationLocation = response.Headers.First(h => h.Key?.ToLower() == "operation-location").Value.FirstOrDefault();
+
+                    var resultFromHealthAnalysis = await client.GetAsync(operationLocation);
+                    JsonNode resultFromService = JsonSerializer.Deserialize<JsonNode>(await resultFromHealthAnalysis.Content.ReadAsStringAsync());
+                    if (resultFromService["status"].GetValue<string>() == "succeeded")
+                    {
+                        Model.AnalysisResult = await resultFromHealthAnalysis.Content.ReadAsStringAsync();
+                        break;
+                    }
+
+                }
+
+                timeAwaited += 500;
+                if (timeAwaited >= maxTimerWait)
+                {
+                    Model.AnalysisResult = $"ERR: Timeout. Operation to analyze input text using Azure HealthAnalytics language service timed out after waiting for {timeAwaited} ms.";
+                    break;
+                }
+            }
+        }
+        catch (Exception err)
+        {
+            Console.WriteLine(err);
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+
     }
+
+
 
     public static class HealthTextAnalysisRequestFactory
     {
