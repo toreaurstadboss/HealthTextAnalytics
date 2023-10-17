@@ -1,0 +1,82 @@
+﻿@page "/"
+@using HealthTextAnalytics.Models;
+@inject IHttpClientFactory _httpClientFactory;
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+
+<EditForm Model="@Model" OnValidSubmit="@Submit">
+    <button class="btn btn-outline-primary" type="submit">Run HealthCare text analysis</button>
+</EditForm>
+
+
+
+
+@code {
+    private IndexModel Model = new();
+
+    private TextAnalyticsClient CreateTextAnalyticsClient()
+    {
+        string? uri = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SERVICES_LANGUAGE_SERVICE_ENDPOINT", EnvironmentVariableTarget.Machine);
+        string? key = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SERVICES_LANGUAGE_SERVICE_KEY", EnvironmentVariableTarget.Machine);
+        if (uri == null)
+        {
+            throw new ArgumentNullException(nameof(uri), "Could not get system environment variable named 'AZURE_COGNITIVE_SERVICE_ENDPOINT' Set this variable first.");
+        }
+        if (key == null)
+        {
+            throw new ArgumentNullException(nameof(uri), "Could not get system environment variable named 'AZURE_COGNITIVE_SERVICE_KEY' Set this variable first.");
+        }
+        var client = new TextAnalyticsClient(new Uri(uri!), new AzureKeyCredential(key!));
+        return client;        
+    }
+
+    private async Task Submit()
+    {
+        var client = _httpClientFactory.CreateClient("Az");
+        string prescription = "The doctor prescribed 200mg Ibuprofen";
+        string requestBodyRaw = HealthTextAnalysisRequestFactory.CreateRequest(prescription);
+
+        var requestPayload = new StringContent(requestBodyRaw);
+
+        string knownEndpointAnalyzeTextUrl = @"language/analyze-text/jobs?api-version=2022-05-15-preview";
+        var response = await client.PostAsync(knownEndpointAnalyzeTextUrl, requestPayload);
+        string responseResult = await response.Content.ReadAsStringAsync();
+        Model.AnalysisResult = responseResult;
+        
+        StateHasChanged();
+    }
+
+    public static class HealthTextAnalysisRequestFactory
+    {
+        public static string CreateRequest(string inputText)
+        {
+            var request = new 
+            {
+                analsysisInput = new
+                {
+                    documents = new[]
+                    {
+                        new { text = inputText, language = "en", id = "1" }                   
+                },
+                    tasks = new[]
+                    {
+                        new { taskId = "analyze 1", kind = "parameters", parameters = new { fhirVersion = "4.0.1" } }
+
+                }
+                }
+            };
+            return System.Text.Json.JsonSerializer.Serialize(request);
+        }
+
+        
+    }
+
+   
+
+
+
+}
