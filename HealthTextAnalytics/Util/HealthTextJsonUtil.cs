@@ -5,6 +5,24 @@ namespace HealthTextAnalytics.Util
     public static class HealthTextJsonUtil
     {
 
+        public static List<Entity> GetEntities(string analysisText)
+        {
+            try
+            {
+                Root doc = System.Text.Json.JsonSerializer.Deserialize<Root>(analysisText);
+
+
+                //try loading up the documents inside of the analysisText
+                var entities = doc?.tasks?.items.FirstOrDefault()?.results?.documents?.SelectMany(d => d.entities)?.ToList();
+                return entities;
+            }
+            catch (Exception err)
+            {
+                Console.WriteLine("Got an error while trying to get entities: " + err.ToString());
+            }
+            return null;
+        }
+
         public static string GetCategorizedInputText(string inputText, string analysisText)
         {
             var sb = new StringBuilder(inputText);

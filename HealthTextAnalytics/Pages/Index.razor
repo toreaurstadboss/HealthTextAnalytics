@@ -5,6 +5,7 @@
 @using System.Text.Json.Nodes;
 @using System.Diagnostics;
 @using HealthTextAnalytics.Util;
+@using static HealthTextAnalytics.Util.HealthTextJsonUtil;
 @inject IHttpClientFactory _httpClientFactory;
 
 <h3>Azure HealthCare Text Analysis - Azure Cognitive Services</h3>
@@ -50,6 +51,33 @@
             <b>Categorized and analyzed Health Analysis of inputted text</b>
             @ms
             <br />
+         
+            <table class="table table-striped table-dark table-hover">
+            <thead>
+                <th>Category</th>
+                <th>Text</th>
+                <th>Name</th>
+                <th>ConfidenceScore</th>
+                <th>Offset</th>
+                <th>Length</th>
+                <th>Links</th>
+            </thead>
+            <tbody>
+            @foreach (var entity in Model.EntititesInAnalyzedResult)
+            {
+                <tr>
+                    <td>@entity.category</td>
+                    <td>@entity.text</td>
+                    <td>@entity.name</td>
+                    <td>@entity.confidenceScore</td>
+                    <td>@entity.offset</td>
+                    <td>@entity.length</td>
+                    <td>@string.Join(Environment.NewLine, (@entity.links ?? new List<Link>()).Select(l => l?.dataSource + " " + l?.id))</td>
+                </tr>
+                
+            }
+            </tbody>
+            </table>
 
             <b>Health Analysis raw text from Azure service</b>
             <InputTextArea class="overflow-scroll" readonly="readonly" style="max-height:500px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.AnalysisResult" rows="1000" />
@@ -58,8 +86,6 @@
    </div>
 
 </EditForm>
-
-
 
 
 @code {
@@ -103,7 +129,8 @@ severe structural defects indication of of the of the right petrous cerebral inf
         {
             isProcessing = true;
             isSearchPerformed = false;
-
+            ms = new MarkupString(string.Empty);
+            Model.EntititesInAnalyzedResult.Clear();
             Model.AnalysisResult = string.Empty;
 
             var client = _httpClientFactory.CreateClient("Az");
@@ -156,6 +183,8 @@ severe structural defects indication of of the of the right petrous cerebral inf
                 }
             }
             ms = new MarkupString(HealthTextJsonUtil.GetCategorizedInputText(Model.InputText, Model.AnalysisResult));
+            
+            Model.EntititesInAnalyzedResult.AddRange(HealthTextJsonUtil.GetEntities(Model.AnalysisResult));
         }
         catch (Exception err)
         {
@@ -169,8 +198,6 @@ severe structural defects indication of of the of the right petrous cerebral inf
         }
 
     }
-
-
 
     public static class HealthTextAnalysisRequestFactory
     {
@@ -193,11 +220,6 @@ severe structural defects indication of of the of the right petrous cerebral inf
             return System.Text.Json.JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true });
         }
 
-
-    }
-
-   
-
-
+    } 
 
 }
