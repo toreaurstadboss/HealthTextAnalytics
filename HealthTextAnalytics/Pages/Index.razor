@@ -4,6 +4,7 @@
 @using System.Text.Json;
 @using System.Text.Json.Nodes;
 @using System.Diagnostics;
+@using HealthTextAnalytics.Util;
 @inject IHttpClientFactory _httpClientFactory;
 
 <h3>Azure HealthCare Text Analysis - Azure Cognitive Services</h3>
@@ -44,10 +45,17 @@
         {
             <br />
             <b>Execution time took: @Model.ExecutionTime ms (milliseconds)</b><br />
+            <br />
+
+            <b>Categorized and analyzed Health Analysis of inputted text</b>
+            @ms
+            <br />
+
+            <b>Health Analysis raw text from Azure service</b>
+            <InputTextArea class="overflow-scroll" readonly="readonly" style="max-height:500px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.AnalysisResult" rows="1000" />
+
         }
-        <br />
-        <InputTextArea class="overflow-scroll" readonly="readonly" style="max-height:500px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.AnalysisResult" rows="1000" />
-    </div>
+   </div>
 
 </EditForm>
 
@@ -57,6 +65,8 @@
 @code {
 
     private IndexModel Model = new();
+
+    MarkupString ms = new();
 
     private bool isProcessing = false;
 
@@ -70,28 +80,29 @@ demonstrating on the right head revealed temporal bone lateralizing on the , and
 severe structural defects indication of of the of the right petrous cerebral infarction";
     }
 
-    private TextAnalyticsClient CreateTextAnalyticsClient()
-    {
-        string? uri = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SERVICES_LANGUAGE_SERVICE_ENDPOINT", EnvironmentVariableTarget.Machine);
-        string? key = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SERVICES_LANGUAGE_SERVICE_KEY", EnvironmentVariableTarget.Machine);
-        if (uri == null)
-        {
-            throw new ArgumentNullException(nameof(uri), "Could not get system environment variable named 'AZURE_COGNITIVE_SERVICE_ENDPOINT' Set this variable first.");
-        }
-        if (key == null)
-        {
-            throw new ArgumentNullException(nameof(uri), "Could not get system environment variable named 'AZURE_COGNITIVE_SERVICE_KEY' Set this variable first.");
-        }
-        var client = new TextAnalyticsClient(new Uri(uri!), new AzureKeyCredential(key!));
+    //private TextAnalyticsClient CreateTextAnalyticsClient()
+    //{
+    //    string? uri = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SERVICES_LANGUAGE_SERVICE_ENDPOINT", EnvironmentVariableTarget.Machine);
+    //    string? key = Environment.GetEnvironmentVariable("AZURE_COGNITIVE_SERVICES_LANGUAGE_SERVICE_KEY", EnvironmentVariableTarget.Machine);
+    //    if (uri == null)
+    //    {
+    //        throw new ArgumentNullException(nameof(uri), "Could not get system environment variable named 'AZURE_COGNITIVE_SERVICE_ENDPOINT' Set this variable first.");
+    //    }
+    //    if (key == null)
+    //    {
+    //        throw new ArgumentNullException(nameof(uri), "Could not get system environment variable named 'AZURE_COGNITIVE_SERVICE_KEY' Set this variable first.");
+    //    }
+    //    var client = new TextAnalyticsClient(new Uri(uri!), new AzureKeyCredential(key!));
 
-        return client;        
-    }
+    //    return client;        
+    //}
 
     private async Task Submit()
     {
         try
         {
-            isProcessing = true; 
+            isProcessing = true;
+            isSearchPerformed = false;
 
             Model.AnalysisResult = string.Empty;
 
@@ -123,6 +134,7 @@ severe structural defects indication of of the of the right petrous cerebral inf
             {
                 if (response.IsSuccessStatusCode)
                 {
+                    isSearchPerformed = true;
                     var operationLocation = response.Headers.First(h => h.Key?.ToLower() == "operation-location").Value.FirstOrDefault();
 
                     var resultFromHealthAnalysis = await client.GetAsync(operationLocation);
@@ -143,6 +155,7 @@ severe structural defects indication of of the of the right petrous cerebral inf
                     break;
                 }
             }
+            ms = new MarkupString(HealthTextJsonUtil.GetCategorizedInputText(Model.InputText, Model.AnalysisResult));
         }
         catch (Exception err)
         {

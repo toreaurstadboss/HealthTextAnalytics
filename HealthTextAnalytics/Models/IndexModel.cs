@@ -11,6 +11,8 @@ namespace HealthTextAnalytics.Models
 
         public string AnalysisResult { get; set; }
 
+        public string CategorizedAnalysisResult { get; set; }
+
         public long ExecutionTime { get; set; }
 
     }
