@@ -67,9 +67,16 @@ namespace HealthTextAnalytics.Util
                 "structure" => "purple",
                 "examinationname" => "green",
                 "procedure" => "green",
+                "treatmentname" => "green",
                 "conditionqualifier" => "lightgreen",
                 "time" => "lightgreen",
-                _ => "lightgray"
+                "date" => "lightgreen",
+                "familyrelation" => "purple",
+                "employment" => "purple",
+                "livingstatus" => "purple",
+                "administrativeevent" => "darkgreen",
+                "careenvironment" => "darkgreen",
+                _ => "darkgray"
             };
             return backgroundColor;
         }
