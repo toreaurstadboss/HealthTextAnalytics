@@ -59,4 +59,19 @@
       <Folder Include="Images\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="SampleData\Sampledata.Designer.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>Sampledata.resx</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Update="SampleData\Sampledata.resx">
+        <Generator>PublicResXFileCodeGenerator</Generator>
+        <LastGenOutput>Sampledata.Designer.cs</LastGenOutput>
+      </EmbeddedResource>
+    </ItemGroup>
+
 </Project>

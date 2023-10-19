@@ -1,10 +1,32 @@
 ﻿using HealthTextAnalytics.Util.DomainClasses;
 using System.Text;
+using System.Text.Json;
 
 namespace HealthTextAnalytics.Util;
 
 public static class HealthAnalyticsTextHelper
 {
+
+    public static string CreateRequest(string inputText)
+    {
+        //note - the id 1 here in the request is a 'local id' that must be unique per request. only one text is supported in the 
+        //request genreated, however the service allows multiple documents and id's if necessary. in this demo, we only will send in one text at a time
+        var request = new
+        {
+            analysisInput = new
+            {
+                documents = new[]
+                {
+                    new { text = inputText, id = "1", language = "en" }
+                }
+            },
+            tasks = new[]
+            {
+                new { id = "analyze 1", kind = "Healthcare", parameters = new { fhirVersion = "4.0.1" } }
+            }
+        };
+        return JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true });
+    }
 
     public static List<Entity> GetEntities(string analysisText)
     {
