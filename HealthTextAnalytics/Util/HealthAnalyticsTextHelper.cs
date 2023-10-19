@@ -32,7 +32,7 @@ public static class HealthAnalyticsTextHelper
     {
         try
         {
-            Root doc = System.Text.Json.JsonSerializer.Deserialize<Root>(analysisText);
+            Root doc = JsonSerializer.Deserialize<Root>(analysisText);
 
             //try loading up the documents inside of the analysisText
             var entities = doc?.tasks?.items.FirstOrDefault()?.results?.documents?.SelectMany(d => d.entities)?.ToList();
@@ -50,7 +50,7 @@ public static class HealthAnalyticsTextHelper
         var sb = new StringBuilder(inputText);
         try
         {
-            Root doc = System.Text.Json.JsonSerializer.Deserialize<Root>(analysisText);
+            Root doc = JsonSerializer.Deserialize<Root>(analysisText);
 
             //try loading up the documents inside of the analysisText
             var entities = doc?.tasks?.items.FirstOrDefault()?.results?.documents?.SelectMany(d => d.entities)?.ToList();
@@ -101,8 +101,5 @@ public static class HealthAnalyticsTextHelper
         };
         return backgroundColor;
     }
-
-
-
 
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using HealthTextAnalytics.Util;
+using Microsoft.Extensions.Logging;
 
 namespace HealthTextAnalytics;
 
@@ -43,6 +44,8 @@ public static class MauiProgram
             //httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
             httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", azureKey);
         });
+
+        builder.Services.AddScoped<IHealthAnalyticsTextClientService, HealthAnalyticsTextClientService>();
 
         return builder.Build();
     }

@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using HealthTextAnalytics.Models;
 @inject IHttpClientFactory _httpClientFactory;
+@inject IHealthAnalyticsTextClientService _healthAnalyticsTextClientService;
 
 <h3>Azure HealthCare Text Analysis - Azure Cognitive Services</h3>
 
@@ -64,7 +65,7 @@
                     <td>@entity.confidenceScore</td>
                     <td>@entity.offset</td>
                     <td>@entity.length</td>
-                    <td>@string.Join(Environment.NewLine, (@entity.links ?? new List<Link>()).Select(l => l?.dataSource + " " + l?.id))</td>
+                    <td>@string.Join(Environment.NewLine, (@entity.links ?? new List<Link>()).Select(l => l?.dataSource + " " + l?.id + " | "))</td>
                 </tr>
             
         }

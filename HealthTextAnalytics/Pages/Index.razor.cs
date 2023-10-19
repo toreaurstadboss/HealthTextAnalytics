@@ -33,48 +33,55 @@ namespace HealthTextAnalytics.Pages
             try
             {
                 ResetFieldsForBeforeSearch();
-                var client = _httpClientFactory.CreateClient("Az");
 
-                string requestBodyRaw = HealthAnalyticsTextHelper.CreateRequest(Model.InputText);
+                HealthTextAnalyticsResponse response = await _healthAnalyticsTextClientService.GetHealthTextAnalytics(Model.InputText);
+                Model.EntititesInAnalyzedResult = response.Entities;
+                Model.ExecutionTime = response.ExecutionTimeInMilliseconds;
+                Model.AnalysisResult = response.AnalysisResultRawJson;
 
-                //https://learn.microsoft.com/en-us/azure/ai-services/language-service/text-analytics-for-health/how-to/call-api?tabs=ner
+                ms = new MarkupString(response.CategorizedInputText);
 
-                var stopWatch = Stopwatch.StartNew();
+                //var client = _httpClientFactory.CreateClient("Az");
 
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, Constants.Constants.AnalyzeTextEndpoint);
-                request.Content = new StringContent(requestBodyRaw, Encoding.UTF8, "application/json");//CONTENT-TYPE header
-                var response = await client.SendAsync(request);
-                const int awaitTimeInMs = 500;
-                var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(awaitTimeInMs));
-                const int maxTimerWait = 10000;
-                int timeAwaited = 0;
+                //string requestBodyRaw = HealthAnalyticsTextHelper.CreateRequest(Model.InputText);
 
-                while (await timer.WaitForNextTickAsync())
-                {
-                    if (response.IsSuccessStatusCode)
-                    {
-                        isSearchPerformed = true;
-                        var operationLocation = response.Headers.First(h => h.Key?.ToLower() == "operation-location").Value.FirstOrDefault();
+                ////https://learn.microsoft.com/en-us/azure/ai-services/language-service/text-analytics-for-health/how-to/call-api?tabs=ner
 
-                        var resultFromHealthAnalysis = await client.GetAsync(operationLocation);
-                        JsonNode resultFromService = JsonSerializer.Deserialize<JsonNode>(await resultFromHealthAnalysis.Content.ReadAsStringAsync());
-                        if (resultFromService["status"].GetValue<string>() == "succeeded")
-                        {
-                            Model.AnalysisResult = await resultFromHealthAnalysis.Content.ReadAsStringAsync();
-                            Model.ExecutionTime = stopWatch.ElapsedMilliseconds;
-                            break;
-                        }
-                    }
-                    timeAwaited += 500;
-                    if (timeAwaited >= maxTimerWait)
-                    {
-                        Model.AnalysisResult = $"ERR: Timeout. Operation to analyze input text using Azure HealthAnalytics language service timed out after waiting for {timeAwaited} ms.";
-                        break;
-                    }
-                }
-                ms = new MarkupString(HealthAnalyticsTextHelper.GetCategorizedInputText(Model.InputText, Model.AnalysisResult));
+                //var stopWatch = Stopwatch.StartNew();
 
-                Model.EntititesInAnalyzedResult.AddRange(HealthAnalyticsTextHelper.GetEntities(Model.AnalysisResult));
+                //HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, Constants.Constants.AnalyzeTextEndpoint);
+                //request.Content = new StringContent(requestBodyRaw, Encoding.UTF8, "application/json");//CONTENT-TYPE header
+                //var response = await client.SendAsync(request);
+                //const int awaitTimeInMs = 500;
+                //var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(awaitTimeInMs));
+                //const int maxTimerWait = 10000;
+                //int timeAwaited = 0;
+
+                //while (await timer.WaitForNextTickAsync())
+                //{
+                //    if (response.IsSuccessStatusCode)
+                //    {
+                //        isSearchPerformed = true;
+                //        var operationLocation = response.Headers.First(h => h.Key?.ToLower() == "operation-location").Value.FirstOrDefault();
+
+                //        var resultFromHealthAnalysis = await client.GetAsync(operationLocation);
+                //        JsonNode resultFromService = await resultFromHealthAnalysis.GetJsonFromHttpResponse();
+                //        if (resultFromService.GetValue<string>("status") == "succeeded")
+                //        {
+                //            Model.AnalysisResult = await resultFromHealthAnalysis.Content.ReadAsStringAsync();
+                //            Model.ExecutionTime = stopWatch.ElapsedMilliseconds;
+                //            break;
+                //        }
+                //    }
+                //    timeAwaited += 500;
+                //    if (timeAwaited >= maxTimerWait)
+                //    {
+                //        Model.AnalysisResult = $"ERR: Timeout. Operation to analyze input text using Azure HealthAnalytics language service timed out after waiting for {timeAwaited} ms.";
+                //        break;
+                //    }
+                //}
+                //ms = new MarkupString(HealthAnalyticsTextHelper.GetCategorizedInputText(Model.InputText, Model.AnalysisResult));
+                //Model.EntititesInAnalyzedResult.AddRange(HealthAnalyticsTextHelper.GetEntities(Model.AnalysisResult));
             }
             catch (Exception err)
             {
