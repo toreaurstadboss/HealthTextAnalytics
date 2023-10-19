@@ -5,6 +5,7 @@
 @using System.Text.Json.Nodes;
 @using System.Diagnostics;
 @using HealthTextAnalytics.Util;
+@using System.Text.RegularExpressions;
 @using static HealthTextAnalytics.Util.HealthTextJsonUtil;
 @inject IHttpClientFactory _httpClientFactory;
 
@@ -16,7 +17,7 @@
 
     <div class="form-group row">
         <label><strong>Text input</strong></label>
-        <InputTextArea class="overflow-scroll" style="max-height:500px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.InputText" rows="5" />
+        <InputTextArea @oninput="removeWhitespace" class="overflow-scroll" style="max-height:500px;max-width:900px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.InputText" rows="5" />
     </div>
 
     <div class="form-group row"> 
@@ -80,7 +81,7 @@
             </table>
 
             <b>Health Analysis raw text from Azure service</b>
-            <InputTextArea class="overflow-scroll" readonly="readonly" style="max-height:500px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.AnalysisResult" rows="1000" />
+            <InputTextArea class="overflow-scroll" readonly="readonly" style="max-height:500px; max-width:900px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif" @bind-Value="@Model.AnalysisResult" rows="1000" />
 
         }
    </div>
@@ -98,6 +99,12 @@
 
     private bool isSearchPerformed = false;
 
+    private void removeWhitespace(ChangeEventArgs args)
+    {
+        Model.InputText = Regex.Replace(args.Value?.ToString(), @"\s+", " ");
+        StateHasChanged();
+    }
+
     protected override void OnParametersSet()
     {
         Model.InputText = @"A 12-year old girl with known hyperagglutinability, presented to the emergency department with a 2-week history 
@@ -105,7 +112,7 @@ of headeaches and examination right side indicated with conduction facial weakne
 demonstrating on the right head revealed temporal bone lateralizing on the , and the Magnetic resonance imaging
 severe structural defects indication of of the of the right petrous cerebral infarction";
 
-        Model.InputText = @"Mr Tan Ah Kow was accompanied by his son, Mr Tan Ah Beng, for the examination.
+        Model.InputText = Regex.Replace(@"Mr Tan Ah Kow was accompanied by his son, Mr Tan Ah Beng, for the examination.
 Mr Tan is a 55 year old man, who is divorced, and unemployed. Mr Tan is currently
 living with his son, Ah Beng, in Ah Beng’s flat. Mr Tan Ah Beng informed me that
 Mr Tan Ah Kow used to work as a cleaner.
@@ -120,7 +127,7 @@ Thereafter, he was transferred to XYZ Hospital for stroke rehabilitation on 15 A
 2010.
 After that, Mr Tan was referred to Blackacre Hospital for follow-up treatment from in
 November 2010. The clinical impression was that he was manifesting behavioural and
-psychological symptoms secondary to Dementia";
+psychological symptoms secondary to Dementia", @"\s+", " ");
     }
 
     //private TextAnalyticsClient CreateTextAnalyticsClient()

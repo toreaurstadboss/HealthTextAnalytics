@@ -47,7 +47,7 @@ namespace HealthTextAnalytics.Util
 
                 Console.WriteLine("Got an error while trying to load in analysis healthcare json: " + err.ToString());
             }
-            return $"<pre style='max-height:500px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif;'>{sb}</pre>";
+            return $"<pre style='text-wrap:wrap; max-height:500px;font-size: 10pt;font-family:Verdana, Geneva, Tahoma, sans-serif;'>{sb}</pre>";
         }
 
         private static string GetBackgroundColor(Entity row)
