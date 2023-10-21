@@ -1,10 +1,7 @@
 ﻿using HealthTextAnalytics.Models;
 using HealthTextAnalytics.Util;
 using Microsoft.AspNetCore.Components;
-using System.Diagnostics;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace HealthTextAnalytics.Pages
 {
@@ -16,15 +13,23 @@ namespace HealthTextAnalytics.Pages
         private bool isProcessing = false;
         private bool isSearchPerformed = false;   
 
+        private InputWatcher inputWatcher = new InputWatcher();
+        private bool isInvalid = false;
+
+        private void FieldChanged(string fieldName)
+        {
+            isInvalid = !inputWatcher.Validate();
+        }
+        
         protected override void OnParametersSet()
         {
             Model.InputText = SampleData.Sampledata.SamplePatientTextNote2.CleanupAllWhiteSpace();
             StateHasChanged();
         }
 
-        private void removeWhitespace(ChangeEventArgs args)
+        private void removeWhitespace(KeyboardEventArgs eventArgs)
         {
-            Model.InputText = args.Value?.ToString().CleanupAllWhiteSpace();
+            Model.InputText = Model.InputText.CleanupAllWhiteSpace();
             StateHasChanged();
         }
 
